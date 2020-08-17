@@ -26,7 +26,20 @@ impl Location {
     }
 }
 
-// Spatial walking tour functions
+// Functions common to spatial and temporal walking tours
+
+pub fn initiate_program() -> usize {
+    "Prints welcome messages and allows user to choose which tour to take";
+    println!("Welcome to Michael's walking tour of Montréal");
+    println!("Please choose the kind of tour you would like to be on:");
+    println!("1) A spatial walking tour");
+    println!("2) A temporal walking tour");
+    println!("Please enter your choice as an integer.");
+    // Needs input sanitization
+    let options = vec![String::from("1\n"), String::from("2\n")];
+    let choice = numerical_input(options);
+    choice
+}
 
 pub fn numerical_input(options: Vec<String>) -> usize {
     "Accepts a vector of possible inputs (must be a vector of strings of only an integer and
@@ -45,19 +58,52 @@ pub fn numerical_input(options: Vec<String>) -> usize {
     choice
 }
 
-pub fn initiate_program() -> usize {
-    "Prints welcome messages and allows user to choose which tour to take";
-    println!("Welcome to Michael's walking tour of Montréal");
-    println!("Please choose the kind of tour you would like to be on:");
-    println!("1) A spatial walking tour (for now this is the only option)");
-    println!("Please enter your choice as an integer.");
-    // Needs input sanitization
-    let options = vec![String::from("1\n")];
-    let choice = numerical_input(options);
+pub fn keep_going() -> bool {
+    "Prompts the user to indicate whether they want to quit or not, and returns a boolean";
+    println!("To quit type q + Enter. To continue the tour type any key + Enter");
+    // Read and parse input
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)
+        .expect("Couldn't read line");
+    // Generate bool from input
+    let choice =
+        if input == String::from("q\n"){
+            false
+        } else {
+            true
+        };
     choice
 }
 
-pub fn initiate_walking_tour(location_count: usize, data: &Vec<Location>) -> usize {
+// Spatial walking tour functions
+
+pub fn spatial_walking_tour(location_count: usize, data: &Vec<Location>) {
+    // Choose initial location based on neighbourhood
+    let mut choice = initiate_spatial_tour(location_count, &data);
+    // current_location is noted to facilitate easier navigation later (new call to next_step)
+    let mut current_location = choice;
+    loop {
+        let location = &data[choice];
+        location.output();
+        println!("");
+        let continue_tour = keep_going();
+        if continue_tour == false {
+            break
+        }
+        choice = next_step_spatial(choice, location_count, &data); // index of next location chosen by user
+        println!("");
+        loop {
+            if choice != current_location { // if the next location isn't the current, reset current location
+                current_location = choice;
+                break
+            }
+            // while next location (choice) is current location keep asking user to choose a next location
+            choice = next_step_spatial(choice, location_count, &data);
+        }
+    }
+}
+
+pub fn initiate_spatial_tour(location_count: usize, data: &Vec<Location>) -> usize {
     "Determines the first location in the spatial walking tour by presenting the user with the
     list of unique neighbourhoods, and asking them to choose which neighbourhood to visit. Then
     returns the index of the first location from that neighbourhood";
@@ -103,24 +149,7 @@ pub fn initiate_walking_tour(location_count: usize, data: &Vec<Location>) -> usi
     next_location
 }
 
-pub fn keep_going() -> bool {
-    "Prompts the user to indicate whether they want to quit or not, and returns a boolean";
-    println!("To quit type q + Enter. To continue the tour type any key + Enter");
-    // Read and parse input
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)
-        .expect("Couldn't read line");
-    // Generate bool from input
-    let choice =
-        if input == String::from("q\n"){
-            false
-        } else {
-            true
-        };
-    choice
-}
-
-pub fn next_step(current_location: usize, location_count: usize, data: &Vec<Location>) -> usize {
+pub fn next_step_spatial(current_location: usize, location_count: usize, data: &Vec<Location>) -> usize {
     "Presents the user with 6 ways to move around spatially, and returns the index of the next
     location based on the chosen modality (note that in the case where the user can't move in
     the requested way from the current location it returns the current location and will be called
@@ -258,6 +287,144 @@ pub fn move_east_west(location_count: usize, current_location: usize,
     next_location
 }
 
+// Temporal walking tour functions
+
+pub fn temporal_walking_tour(location_count: usize, data: &Vec<Location>) {
+
+    println!("In what year would you like to start your tour?");
+    let mut choice = initiate_temporal_tour(location_count, data);
+    // current_location is noted to facilitate easier navigation later (new call to next_step)
+    let mut current_location = choice;
+    loop {
+        let location = &data[choice];
+        location.output();
+        println!("");
+        let continue_tour = keep_going();
+        if continue_tour == false {
+            break
+        }
+        choice = next_step_temporal(choice, location_count, &data); // index of next location chosen by user
+        println!("");
+        loop {
+            if choice != current_location { // if the next location isn't the current, reset current location
+                current_location = choice;
+                break
+            }
+            // while next location (choice) is current location keep asking user to choose a next location
+            println!("You're already at that location, try again!\n");
+            choice = next_step_temporal(choice, location_count, &data);
+        }
+    }
+}
+
+pub fn initiate_temporal_tour(location_count: usize, data: &Vec<Location>) -> usize {
+    // List all the neighbourhoods that could be visited
+    let mut years: HashSet<&i32> = vec![&data[0].year].into_iter().collect();
+    for i in 1..location_count {
+        years.insert(&data[i].year);
+    }
+    // Present the user with the choices
+    let v: Vec<_> = years.into_iter().collect();
+    for i in 0..v.len() {
+        println!("{} - {}",i, v[i]);
+    }
+
+    // User chooses which year to visit with numerical input
+    let options = vec![String::from("0\n"),String::from("1\n"),String::from("2\n")];
+    let choice = numerical_input(options);
+    // Determine the name of the year that is indicated by numerical input
+    let mut i = 0;
+    let year = loop {
+        let response = &v[i];
+        if i == choice {
+            break
+            response
+        }
+        i += 1;
+    };
+    println!("You chose to visit the year: {}", year);
+    // Choose first location from data from that neighbourhood
+    let mut i = 0;
+    let next_location = loop {
+        if &data[i].year == *year {
+            break
+            i
+        }
+        i += 1;
+    };
+
+    next_location
+}
+
+pub fn next_step_temporal (current_location: usize, location_count: usize, data: &Vec<Location>) -> usize {
+    "Presents the user with 6 ways to move around temporally, and returns the index of the next
+    location based on the chosen modality (note that in the case where the user can't move in
+    the requested way from the current location it returns the current location and will be called
+    again from temporal_walking_tour)";
+
+    let options = vec!["1) I want to go forward in time.","2) I want to go backward in time.",
+    "3) I want to visit winter.", "4) I want to go spring.", "5) I want to visit summer.",
+    "6) I want to visit fall."];
+    let options_numeric = vec![String::from("1\n"),String::from("2\n"),String::from("3\n"),
+        String::from("4\n"),String::from("5\n"),String::from("6\n")];
+    let mut input = String::new();
+    loop {
+        for i in &options {
+            println!("{}",i);
+        }
+        println!("");
+        io::stdin().read_line(&mut input)
+            .expect("Couldn't read line");
+        if options_numeric.contains(&input) {
+            break
+        }
+        println!("Oops, that input isn't allowed. Try again!\n");
+        input = String::new();
+    }
+
+    let next_location =
+        if input == String::from("1\n") {
+            0
+        } else if input == String::from("2\n") {
+            1
+        } else if input == String::from("3\n") {
+            random_season_selector(location_count, &data, 0)
+        } else if input == String::from("4\n") {
+            random_season_selector(location_count, &data, 1)
+        } else if input == String::from("5\n") {
+            random_season_selector(location_count, &data, 2)
+        } else {
+            random_season_selector(location_count, &data, 3)
+        };
+    next_location
+}
+
+pub fn random_season_selector(location_count: usize, data: &Vec<Location>, mode: i32) -> usize {
+    // Create a vector with the suitable months for each season
+    let mut months = vec![0,0,0];
+    if mode == 0 {
+        months = vec![12, 1, 2];
+    } else if mode == 1 {
+        months = vec![3,4,5];
+    } else if mode == 2 {
+        months = vec![6,7,8];
+    } else {
+        months = vec![9,10,11];
+    };
+    // Generate a vector with all the memories from the selected season
+    let mut seasonal_locations = Vec::new();
+    for i in 0..location_count {
+        if months.contains(&data[i].month){
+            seasonal_locations.push(i);
+        }
+    }
+    // Choose a random index for the vector, and return the location associated with that index
+    // Will cause panic if there isn't at least one memory for the selected season
+    let chosen = rand::thread_rng().gen_range(0, seasonal_locations.len());
+    seasonal_locations[chosen]
+}
+
+
 // Raw data
 
 pub fn gen_data() -> Vec<Location> {
@@ -306,5 +473,6 @@ pub fn gen_data() -> Vec<Location> {
     };
 
     let data = vec![loc0, loc1, loc2, loc3];
+
     data
 }
