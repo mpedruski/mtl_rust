@@ -1,8 +1,9 @@
 extern crate mtl;
+mod data;
 
 fn main() {
     // Read data into memory
-    let data = mtl::gen_data();
+    let data = data::gen_data();
     let location_count = data.len();
     // Choose the appropriate tour
     let tour = mtl::initiate_program();
