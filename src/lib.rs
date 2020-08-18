@@ -75,6 +75,15 @@ pub fn keep_going() -> bool {
     choice
 }
 
+pub fn variable_options(x: usize) -> Vec<String> {
+    let mut v = Vec::<String>::new();
+    let s = "\n";
+    for i in 0..x {
+        v.push(format!("{}{}",i,s));
+    }
+    v
+}
+
 // Spatial walking tour functions
 
 pub fn spatial_walking_tour(location_count: usize, data: &Vec<Location>) {
@@ -109,8 +118,7 @@ pub fn initiate_spatial_tour(location_count: usize, data: &Vec<Location>) -> usi
     returns the index of the first location from that neighbourhood";
 
     println!("What neighbourhood would you like to visit? \
-    Note neighbourhoods have numbers running from 0 to {}. \
-    (Input an integer in that range or you'll crash the whole thing!)", location_count);
+    Note neighbourhoods have numbers running from 0 to {}.", location_count-1);
 
     // List all the neighbourhoods that could be visited
     let mut neighbs: HashSet<String> = vec![String::from(&data[0].quartier)].into_iter().collect();
@@ -124,7 +132,8 @@ pub fn initiate_spatial_tour(location_count: usize, data: &Vec<Location>) -> usi
     }
 
     // User chooses which neighbourhood to visit with numerical input
-    let options = vec![String::from("0\n"),String::from("1\n"),String::from("2\n")];
+    let options = variable_options(v.len());
+    // let options = vec![String::from("0\n"),String::from("1\n"),String::from("2\n")];
     let choice = numerical_input(options);
     // Determine the name of the neighbourhood that is indicated by numerical input
     let mut i = 0;
@@ -289,7 +298,7 @@ pub fn move_east_west(location_count: usize, current_location: usize,
 
 // Temporal walking tour functions
 
-pub fn temporal_walking_tour(location_count: usize, data: &Vec<Location>) {
+pub fn temporal_walking_tour(location_count: usize, data: &Vec<Location>, timepoints: Vec<i32>) {
 
     println!("In what year would you like to start your tour?");
     let mut choice = initiate_temporal_tour(location_count, data);
@@ -303,7 +312,7 @@ pub fn temporal_walking_tour(location_count: usize, data: &Vec<Location>) {
         if continue_tour == false {
             break
         }
-        choice = next_step_temporal(choice, location_count, &data); // index of next location chosen by user
+        choice = next_step_temporal(choice, location_count, &data, &timepoints); // index of next location chosen by user
         println!("");
         loop {
             if choice != current_location { // if the next location isn't the current, reset current location
@@ -311,8 +320,7 @@ pub fn temporal_walking_tour(location_count: usize, data: &Vec<Location>) {
                 break
             }
             // while next location (choice) is current location keep asking user to choose a next location
-            println!("You're already at that location, try again!\n");
-            choice = next_step_temporal(choice, location_count, &data);
+            choice = next_step_temporal(choice, location_count, &data, &timepoints);
         }
     }
 }
@@ -324,13 +332,14 @@ pub fn initiate_temporal_tour(location_count: usize, data: &Vec<Location>) -> us
         years.insert(&data[i].year);
     }
     // Present the user with the choices
-    let v: Vec<_> = years.into_iter().collect();
+    let mut v: Vec<_> = years.into_iter().collect();
+    v.sort();
     for i in 0..v.len() {
         println!("{} - {}",i, v[i]);
     }
 
     // User chooses which year to visit with numerical input
-    let options = vec![String::from("0\n"),String::from("1\n"),String::from("2\n")];
+    let options = variable_options(v.len());
     let choice = numerical_input(options);
     // Determine the name of the year that is indicated by numerical input
     let mut i = 0;
@@ -356,7 +365,8 @@ pub fn initiate_temporal_tour(location_count: usize, data: &Vec<Location>) -> us
     next_location
 }
 
-pub fn next_step_temporal (current_location: usize, location_count: usize, data: &Vec<Location>) -> usize {
+pub fn next_step_temporal (current_location: usize, location_count: usize, data: &Vec<Location>,
+    timepoints: &Vec<i32>) -> usize {
     "Presents the user with 6 ways to move around temporally, and returns the index of the next
     location based on the chosen modality (note that in the case where the user can't move in
     the requested way from the current location it returns the current location and will be called
@@ -384,24 +394,25 @@ pub fn next_step_temporal (current_location: usize, location_count: usize, data:
 
     let next_location =
         if input == String::from("1\n") {
-            0
+            forward_backward(current_location, location_count, timepoints, 1)
         } else if input == String::from("2\n") {
-            1
+            forward_backward(current_location, location_count, timepoints, 0)
         } else if input == String::from("3\n") {
-            random_season_selector(location_count, &data, 0)
+            random_season_selector(current_location, location_count, &data, 0)
         } else if input == String::from("4\n") {
-            random_season_selector(location_count, &data, 1)
+            random_season_selector(current_location, location_count, &data, 1)
         } else if input == String::from("5\n") {
-            random_season_selector(location_count, &data, 2)
+            random_season_selector(current_location, location_count, &data, 2)
         } else {
-            random_season_selector(location_count, &data, 3)
+            random_season_selector(current_location, location_count, &data, 3)
         };
     next_location
 }
 
-pub fn random_season_selector(location_count: usize, data: &Vec<Location>, mode: i32) -> usize {
+pub fn random_season_selector(current_location: usize, location_count: usize, data: &Vec<Location>,
+    mode: i32) -> usize {
     // Create a vector with the suitable months for each season
-    let mut months = vec![0,0,0];
+    let mut months = vec![9, 10, 11];
     if mode == 0 {
         months = vec![12, 1, 2];
     } else if mode == 1 {
@@ -409,7 +420,7 @@ pub fn random_season_selector(location_count: usize, data: &Vec<Location>, mode:
     } else if mode == 2 {
         months = vec![6,7,8];
     } else {
-        months = vec![9,10,11];
+        months = months;
     };
     // Generate a vector with all the memories from the selected season
     let mut seasonal_locations = Vec::new();
@@ -421,9 +432,41 @@ pub fn random_season_selector(location_count: usize, data: &Vec<Location>, mode:
     // Choose a random index for the vector, and return the location associated with that index
     // Will cause panic if there isn't at least one memory for the selected season
     let chosen = rand::thread_rng().gen_range(0, seasonal_locations.len());
+    if current_location == seasonal_locations[chosen] {
+        println!("Oops, looks like we led you back to your current location. Pick your next move!")
+    }
     seasonal_locations[chosen]
 }
 
+pub fn gen_timepoints(location_count: usize, data: &Vec<Location>) -> Vec<i32> {
+    let mut timepoints = Vec::new();
+    for i in 0..location_count {
+        timepoints.push((data[i].year - 2002)*12 + data[i].month);
+    }
+    timepoints
+}
+
+pub fn forward_backward(current_location: usize, location_count: usize, timepoints: &Vec<i32>,
+        mode: i32) -> usize {
+    let current_timepoint = timepoints[current_location];
+    let mut min_difference = 100; // arbitrarily large value
+    let mut direction = 1;
+    if mode == 0 {
+        direction = -1;
+    }
+    let mut next_location = current_location;
+    for i in 0..location_count {
+        if direction*(timepoints[i] - current_timepoint) < min_difference &&
+            direction*(timepoints[i] - current_timepoint) > 0 {
+            min_difference = direction*(timepoints[i] - current_timepoint);
+            next_location = i;
+        }
+    };
+    if current_location == next_location {
+        println!("Oops, you can't go that way! Try another option!\n");
+    }
+    next_location
+}
 
 // Raw data
 

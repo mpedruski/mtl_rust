@@ -10,6 +10,8 @@ fn main() {
     if tour == 1 {
         mtl::spatial_walking_tour(location_count, &data);
     } else {
-        mtl::temporal_walking_tour(location_count, &data);
+        let timepoints = mtl::gen_timepoints(location_count, &data);
+        // println!("Timepoints: {:?}",timepoints);
+        mtl::temporal_walking_tour(location_count, &data, timepoints);
     }
 }
