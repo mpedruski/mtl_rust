@@ -35,9 +35,21 @@ pub fn initiate_program() -> usize {
     println!("2) A temporal walking tour");
     println!("Please enter your choice as an integer.");
     // Needs input sanitization
-    let options = vec![String::from("1\n"), String::from("2\n")];
+    let options = vec![String::from("1"), String::from("2")];
     let choice = numerical_input(options);
     choice
+}
+
+pub fn newline_character_sanitization(text: String) -> String {
+    "Removes potential newline characters from user input strings";
+    let mut input = text;
+    if let Some('\n')=input.chars().next_back() { //remove newline characters
+        input.pop();
+    }
+    if let Some('\r')=input.chars().next_back() { //remove newline characters (windows)
+        input.pop();
+    }
+    input
 }
 
 pub fn numerical_input(options: Vec<String>) -> usize {
@@ -47,6 +59,7 @@ pub fn numerical_input(options: Vec<String>) -> usize {
     loop {
         io::stdin().read_line(&mut input)
             .expect("Couldn't read line");
+        input = newline_character_sanitization(input); // removes unix/windows newline characters
         if options.contains(&input){
             break
         }
@@ -64,9 +77,11 @@ pub fn keep_going() -> bool {
     let mut input = String::new();
     io::stdin().read_line(&mut input)
         .expect("Couldn't read line");
+    input = newline_character_sanitization(input);
+
     // Generate bool from input
     let choice =
-        if input == String::from("q\n"){
+        if input == String::from("q"){
             false
         } else {
             true
@@ -76,9 +91,8 @@ pub fn keep_going() -> bool {
 
 pub fn variable_options(x: usize) -> Vec<String> {
     let mut v = Vec::<String>::new();
-    let s = "\n";
     for i in 0..x {
-        v.push(format!("{}{}",i,s));
+        v.push(format!("{}",i));
     }
     v
 }
@@ -165,8 +179,8 @@ pub fn next_step_spatial(current_location: usize, location_count: usize, data: &
 
     let options = vec!["1) I want to go north.","2) I want to go east.","3) I want to go south.",
         "4) I want to go west.", "5) Take me to whatever is closest.", "6) I don't care, take me anywhere."];
-    let options_numeric = vec![String::from("1\n"),String::from("2\n"),String::from("3\n"),
-        String::from("4\n"),String::from("5\n"),String::from("6\n")];
+    let options_numeric = vec![String::from("1"),String::from("2"),String::from("3"),
+        String::from("4"),String::from("5"),String::from("6")];
     let mut input = String::new();
     loop {
         for i in &options {
@@ -175,6 +189,7 @@ pub fn next_step_spatial(current_location: usize, location_count: usize, data: &
         println!("");
         io::stdin().read_line(&mut input)
             .expect("Couldn't read line");
+        input = newline_character_sanitization(input);
         if options_numeric.contains(&input) {
             break
         }
@@ -183,15 +198,15 @@ pub fn next_step_spatial(current_location: usize, location_count: usize, data: &
     }
 
     let next_location =
-        if input == String::from("1\n") {
+        if input == String::from("1") {
             move_north_south(location_count, current_location, data, 1)
-        } else if input == String::from("2\n") {
+        } else if input == String::from("2") {
             move_east_west(location_count, current_location, data, 1)
-        } else if input == String::from("3\n") {
+        } else if input == String::from("3") {
             move_north_south(location_count, current_location, data, 0)
-        } else if input == String::from("4\n") {
+        } else if input == String::from("4") {
             move_east_west(location_count, current_location, data, 0)
-        } else if input == String::from("5\n") {
+        } else if input == String::from("5") {
             // println!("{}",current_location);
             let arr = euclidean_dist(location_count, data);
             next_location_euclidean(current_location, arr)
@@ -374,8 +389,8 @@ pub fn next_step_temporal (current_location: usize, location_count: usize, data:
     let options = vec!["1) I want to go forward in time.","2) I want to go backward in time.",
     "3) I want to visit winter.", "4) I want to go spring.", "5) I want to visit summer.",
     "6) I want to visit fall."];
-    let options_numeric = vec![String::from("1\n"),String::from("2\n"),String::from("3\n"),
-        String::from("4\n"),String::from("5\n"),String::from("6\n")];
+    let options_numeric = vec![String::from("1"),String::from("2"),String::from("3"),
+        String::from("4"),String::from("5"),String::from("6")];
     let mut input = String::new();
     loop {
         for i in &options {
@@ -384,6 +399,7 @@ pub fn next_step_temporal (current_location: usize, location_count: usize, data:
         println!("");
         io::stdin().read_line(&mut input)
             .expect("Couldn't read line");
+        input = newline_character_sanitization(input);
         if options_numeric.contains(&input) {
             break
         }
@@ -392,15 +408,15 @@ pub fn next_step_temporal (current_location: usize, location_count: usize, data:
     }
 
     let next_location =
-        if input == String::from("1\n") {
+        if input == String::from("1") {
             forward_backward(current_location, location_count, timepoints, 1)
-        } else if input == String::from("2\n") {
+        } else if input == String::from("2") {
             forward_backward(current_location, location_count, timepoints, 0)
-        } else if input == String::from("3\n") {
+        } else if input == String::from("3") {
             random_season_selector(current_location, location_count, &data, 0)
-        } else if input == String::from("4\n") {
+        } else if input == String::from("4") {
             random_season_selector(current_location, location_count, &data, 1)
-        } else if input == String::from("5\n") {
+        } else if input == String::from("5") {
             random_season_selector(current_location, location_count, &data, 2)
         } else {
             random_season_selector(current_location, location_count, &data, 3)
