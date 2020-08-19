@@ -56,7 +56,17 @@ pub fn gen_data() -> Vec<Location> {
         month: 06,
     };
 
-    let data = vec![loc0, loc1, loc2, loc3, loc4];
+    let loc5 = Location {
+        name: String::from("Lac aux castors"),
+        long: -73.59778,
+        lat: 45.49790,
+        quartier: String::from("Ville-Marie"),
+        story: String::from("I've never been skating here."),
+        year: 2012,
+        month: 01,
+    };
+
+    let data = vec![loc0, loc1, loc2, loc3, loc4, loc5];
 
     data
 }
