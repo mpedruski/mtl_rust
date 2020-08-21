@@ -67,6 +67,7 @@ pub fn numerical_input(options: Vec<String>) -> usize {
         input = String::new();
     }
     let choice = input.trim().parse::<usize>().unwrap();
+    println!("");
     choice
 }
 
@@ -131,7 +132,7 @@ pub fn initiate_spatial_tour(location_count: usize, data: &Vec<Location>) -> usi
     returns the index of the first location from that neighbourhood";
 
     println!("What neighbourhood would you like to visit? \
-    Note neighbourhoods have numbers running from 0 to {}.", location_count-1);
+    (Enter your choice as the number before the dash)");
 
     // List all the neighbourhoods that could be visited
     let mut neighbs: HashSet<String> = vec![String::from(&data[0].quartier)].into_iter().collect();
@@ -181,6 +182,9 @@ pub fn next_step_spatial(current_location: usize, location_count: usize, data: &
         "4) I want to go west.", "5) Take me to whatever is closest.", "6) I don't care, take me anywhere."];
     let options_numeric = vec![String::from("1"),String::from("2"),String::from("3"),
         String::from("4"),String::from("5"),String::from("6")];
+
+    println!("What do you want to do now?");
+
     let mut input = String::new();
     loop {
         for i in &options {
@@ -314,7 +318,8 @@ pub fn move_east_west(location_count: usize, current_location: usize,
 
 pub fn temporal_walking_tour(location_count: usize, data: &Vec<Location>, timepoints: Vec<i32>) {
 
-    println!("In what year would you like to start your tour?");
+    println!("In what year would you like to start your tour? \
+    (Enter your choice as the number before the dash)");
     let mut choice = initiate_temporal_tour(location_count, data);
     // current_location is noted to facilitate easier navigation later (new call to next_step)
     let mut current_location = choice;
@@ -391,6 +396,9 @@ pub fn next_step_temporal (current_location: usize, location_count: usize, data:
     "6) I want to visit fall."];
     let options_numeric = vec![String::from("1"),String::from("2"),String::from("3"),
         String::from("4"),String::from("5"),String::from("6")];
+
+    println!("What do you want to do now?");
+
     let mut input = String::new();
     loop {
         for i in &options {
